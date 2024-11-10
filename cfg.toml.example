@@ -1,0 +1,21 @@
+[esp32-presence]
+
+########
+# WiFi #
+########
+wifi_ssid = "MySSID"
+wifi_password = "1234"
+wifi_auth_method = "WPA2Personal"
+# wifi_max_tx_power = 20
+
+########
+# MQTT #
+########
+mqtt_host = "yourpc.local"
+mqtt_3_1_1 = true
+mqtt_node = "presence-node-1"
+mqtt_user = "you"
+mqtt_pass = "1234"
+mqtt_discovery_prefix = "homeassistant"
+mqtt_on_payload = "ON"
+mqtt_off_payload = "OFF"

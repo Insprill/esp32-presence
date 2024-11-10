@@ -1,0 +1,30 @@
+[package]
+name = "esp32-presence"
+version = "0.1.0"
+license = "Apache-2.0"
+edition = "2021"
+
+[[bin]]
+name = "esp32-presence"
+harness = false # Don't use the built in cargo test harness -> resolve rust-analyzer errors
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+strip = true
+lto = true
+
+[profile.dev]
+debug = true # Doesn't increase the size on Flash
+opt-level = "s"
+
+[dependencies]
+anyhow = "1"
+esp-idf-svc = { git = "https://github.com/esp-rs/esp-idf-svc.git" }
+log = "0.4"
+rgb = "0.8"
+toml-cfg = "0.2"
+
+[build-dependencies]
+embuild = "0.32"
+toml-cfg = "0.2"
