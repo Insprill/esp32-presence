@@ -98,6 +98,12 @@ impl Mqtt {
         Ok(())
     }
 
+    pub fn disconnect(&mut self) {
+        // When the EspMqttClient gets dropped, it gets destroyed
+        // See the C implementations of `esp_mqtt_client_destroy` and `esp_mqtt_client_stop`.
+        self.client.take();
+    }
+
     pub fn is_connected(&self) -> bool {
         self.connection_status
             .lock()

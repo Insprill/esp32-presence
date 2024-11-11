@@ -37,6 +37,8 @@ pub struct Config {
     wifi_max_tx_power: i8,
     #[default(300)]
     wifi_increase_tx_power_seconds: u32,
+    #[default(i32::MAX)]
+    wifi_disconnect_rssi: i32,
 
     #[default("yourpc.local")]
     mqtt_host: &'static str,
@@ -123,15 +125,28 @@ impl State<'_> {
                 self.set_led(CLR_MQTT_CONNECTING);
             }
         } else if !self.mqtt.is_connected() {
-            self.wifi.disconnect()?;
-            self.set_led_with_brightness(CLR_SLEEPING, DEFAULT_BRIGHTNESS);
-            sleep(Duration::from_secs(CONFIG.mqtt_min_reconnect_seconds))
+            self.disconnect_and_wait()?;
         } else if WiFi::is_max_tx_power() {
             self.set_led(CLR_ALL_CONNECTED_MAX_PWR)
         } else {
-            self.set_led(CLR_ALL_CONNECTED_MIN_PWR)
+            let rssi = self.wifi.esp_wifi.wifi().get_rssi().unwrap_or(i32::MAX);
+            if rssi < CONFIG.wifi_disconnect_rssi {
+                self.disconnect_and_wait()?;
+            } else {
+                self.set_led(CLR_ALL_CONNECTED_MIN_PWR)
+            }
         }
 
+        Ok(())
+    }
+
+    fn disconnect_and_wait(&mut self) -> Result<()> {
+        if self.mqtt.is_connected() {
+            self.mqtt.disconnect();
+        }
+        self.wifi.disconnect()?;
+        self.set_led_with_brightness(CLR_SLEEPING, DEFAULT_BRIGHTNESS);
+        sleep(Duration::from_secs(CONFIG.mqtt_min_reconnect_seconds));
         Ok(())
     }
 
