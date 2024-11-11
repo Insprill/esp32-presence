@@ -3,7 +3,7 @@ use std::{thread::sleep, time::Duration};
 use anyhow::Result;
 use esp_idf_svc::hal::prelude::Peripherals;
 use led::WS2812RMT;
-use log::error;
+use log::{error, info};
 use mqtt::Mqtt;
 use rgb::RGB8;
 use utils::{map_range, unix_seconds};
@@ -39,6 +39,8 @@ pub struct Config {
     wifi_increase_tx_power_seconds: u32,
     #[default(i32::MAX)]
     wifi_disconnect_rssi: i32,
+    #[default(5)]
+    wifi_disconnect_seconds: u32,
 
     #[default("yourpc.local")]
     mqtt_host: &'static str,
@@ -63,6 +65,7 @@ struct State<'a> {
     mqtt: Mqtt,
     led: WS2812RMT<'a>,
     power_on_time: u32,
+    weak_signal_start: Option<u32>,
 }
 
 fn main() -> Result<()> {
@@ -79,6 +82,7 @@ fn main() -> Result<()> {
         mqtt: Mqtt::new(CONFIG)?,
         led: WS2812RMT::new(peripherals.pins.gpio8, peripherals.rmt.channel0)?,
         power_on_time: unix_seconds(),
+        weak_signal_start: None,
     };
 
     WiFi::set_max_tx_power(CONFIG.wifi_starting_tx_power);
@@ -130,9 +134,22 @@ impl State<'_> {
             self.set_led(CLR_ALL_CONNECTED_MAX_PWR)
         } else {
             let rssi = self.wifi.esp_wifi.wifi().get_rssi().unwrap_or(i32::MAX);
+            info!("RSSI: {}dBm", rssi);
             if rssi < CONFIG.wifi_disconnect_rssi {
-                self.disconnect_and_wait()?;
+                let weak_signal_start = match self.weak_signal_start {
+                    Some(start) => start,
+                    None => {
+                        let sec = unix_seconds();
+                        self.weak_signal_start = Some(sec);
+                        sec
+                    }
+                };
+                if unix_seconds() - weak_signal_start > CONFIG.wifi_disconnect_seconds {
+                    self.weak_signal_start = None;
+                    self.disconnect_and_wait()?;
+                }
             } else {
+                self.weak_signal_start = None;
                 self.set_led(CLR_ALL_CONNECTED_MIN_PWR)
             }
         }

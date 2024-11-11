@@ -10,7 +10,8 @@ wifi_auth_method = "WPA2Personal"
 # wifi_max_tx_power = 20
 # After power on, how long should we wait without a WiFi connection before switching to max power
 # wifi_tx_increase_power_seconds = 300
-# wifi_disconnect_rssi = -70
+# wifi_disconnect_rssi = -80
+# wifi_disconnect_seconds = 4
 
 ########
 # MQTT #
