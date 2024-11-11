@@ -170,7 +170,7 @@ impl State<'_> {
     fn set_led(&mut self, base_color: RGB8) {
         let brightness = if let Ok(rssi) = self.wifi.esp_wifi.wifi().get_rssi() {
             // 1 isn't enough to turn on the lights, and 255 is *way* too bright.
-            map_range(rssi as f32, -70.0, -20.0, 2.0, 20.0)
+            map_range(rssi as f32, -100.0, -20.0, 2.0, 30.0)
         } else {
             DEFAULT_BRIGHTNESS
         };
