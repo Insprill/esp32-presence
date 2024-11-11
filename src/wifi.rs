@@ -2,7 +2,9 @@ use anyhow::{bail, Result};
 use esp_idf_svc::{
     eventloop::EspSystemEventLoop,
     hal::{modem::Modem, peripheral::Peripheral, prelude::Peripherals},
-    sys::{esp_wifi_get_max_tx_power, esp_wifi_set_max_tx_power, ESP_ERR_INVALID_ARG},
+    sys::{
+        esp_wifi_get_max_tx_power, esp_wifi_set_max_tx_power, ESP_ERR_INVALID_ARG, ESP_ERR_TIMEOUT,
+    },
     wifi::{
         AuthMethod, BlockingWifi, ClientConfiguration, Configuration, EspWifi, PmfConfiguration,
         ScanMethod,
@@ -14,7 +16,6 @@ use crate::Config;
 
 pub struct WiFi {
     pub esp_wifi: BlockingWifi<EspWifi<'static>>,
-    max_tx_power: i8,
 }
 
 impl WiFi {
@@ -57,43 +58,57 @@ impl WiFi {
 
         let wifi = BlockingWifi::wrap(esp_wifi, sysloop)?;
 
-        Ok(Self {
-            esp_wifi: wifi,
-            max_tx_power: config.wifi_max_tx_power,
-        })
+        Ok(Self { esp_wifi: wifi })
     }
 
     pub fn is_connected(&self) -> bool {
         self.esp_wifi.is_connected().unwrap_or(false)
     }
 
-    pub fn connect(&mut self) -> Result<()> {
+    pub fn connect(&mut self) -> Result<bool> {
         info!("Connecting...");
 
-        self.esp_wifi.start()?;
-        self.esp_wifi.connect()?;
+        if !self.esp_wifi.is_started()? {
+            self.esp_wifi.start()?;
+        }
 
-        unsafe {
-            let mut power: i8 = 0;
-            esp_wifi_get_max_tx_power(&mut power);
-            info!("Current WiFi power: {}dBm", power as f32 * 0.25);
-            if self.max_tx_power != i8::MIN {
-                if esp_wifi_set_max_tx_power(self.max_tx_power * 4) == ESP_ERR_INVALID_ARG {
-                    error!("Invalid WiFi power {}dBm {}", self.max_tx_power, power);
-                } else {
-                    info!("Set WiFi power to {}dBm", self.max_tx_power);
-                }
+        if let Err(err) = self.esp_wifi.connect() {
+            if err.code() == ESP_ERR_TIMEOUT {
+                return Ok(false);
             }
+            return Err(err.into());
         }
 
         info!("Connected! Waiting for DHCP lease...");
 
-        self.esp_wifi.wait_netif_up()?;
+        if let Err(err) = self.esp_wifi.wait_netif_up() {
+            if err.code() == ESP_ERR_TIMEOUT {
+                return Ok(false);
+            }
+            return Err(err.into());
+        }
 
-        let ip_info = self.esp_wifi.wifi().sta_netif().get_ip_info()?;
+        Ok(true)
+    }
 
-        info!("DHCP lease acquired: {:?}", ip_info);
+    pub fn disconnect(&mut self) -> Result<()> {
+        Ok(self.esp_wifi.disconnect()?)
+    }
 
-        Ok(())
+    pub fn is_max_tx_power() -> bool {
+        let mut power: i8 = 0;
+        unsafe {
+            esp_wifi_get_max_tx_power(&mut power);
+        }
+        // See `esp_wifi_set_max_tx_power`. Range is 8-84.
+        power > 80
+    }
+
+    pub fn set_max_tx_power(dbm: i8) {
+        if unsafe { esp_wifi_set_max_tx_power(dbm * 4) } == ESP_ERR_INVALID_ARG {
+            error!("Invalid WiFi power {}dBm", dbm);
+        } else {
+            info!("Set WiFi power to {}dBm", dbm);
+        }
     }
 }

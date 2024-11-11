@@ -8,7 +8,9 @@ pub struct Config {
     wifi_password: &'static str,
     #[default("WPA2Personal")]
     wifi_auth_method: &'static str,
-    #[default(i8::MIN)]
+    #[default(5)]
+    wifi_starting_tx_power: i8,
+    #[default(20)]
     wifi_max_tx_power: i8,
 
     #[default("yourpc.local")]
@@ -49,11 +51,12 @@ fn main() {
             );
         }
     };
-    if CONFIG.wifi_max_tx_power != i8::MIN {
-        // See `esp_wifi_set_max_tx_power`
-        if CONFIG.wifi_max_tx_power < 2 || CONFIG.wifi_max_tx_power > 20 {
-            panic!("Invalid wifi_max_tx_power! It must be between 2-20 (inclusive).");
-        }
+    // See `esp_wifi_set_max_tx_power`
+    if CONFIG.wifi_starting_tx_power < 2 || CONFIG.wifi_starting_tx_power > 20 {
+        panic!("Invalid wifi_starting_tx_power! It must be between 2-20 (inclusive).");
+    }
+    if CONFIG.wifi_max_tx_power < 2 || CONFIG.wifi_max_tx_power > 20 {
+        panic!("Invalid wifi_max_tx_power! It must be between 2-20 (inclusive).");
     }
 
     // MQTT
