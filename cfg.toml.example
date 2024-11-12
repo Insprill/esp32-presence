@@ -7,6 +7,8 @@ wifi_ssid = "MySSID"
 wifi_password = "1234"
 # None | WPA | WPA2Personal | WPAWPA2Personal | WPA3Personal | WPA2WPA3Personal
 wifi_auth_method = "WPA2Personal"
+# The channel the AP is on. This is optional, but may speed up the connection process.
+#wifi_channel = 6
 # The maximum WiFi transmit power, in dBm, from 2-20 (inclusive).
 #wifi_max_tx_power = 20
 # Once the WiFi RSSI is under this value, it will disconnect and enter the MQTT reconnect timeout.

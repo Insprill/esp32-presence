@@ -31,6 +31,8 @@ pub struct Config {
     wifi_password: &'static str,
     #[default("WPA2Personal")]
     wifi_auth_method: &'static str,
+    #[default(u8::MAX)]
+    wifi_channel: u8,
     #[default(20)]
     wifi_max_tx_power: i8,
     #[default(-80)]

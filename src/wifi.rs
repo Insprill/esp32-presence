@@ -45,6 +45,7 @@ impl WiFi {
             ssid: config.wifi_ssid.try_into().expect("ssid too long"),
             password: config.wifi_password.try_into().expect("password too long"),
             auth_method,
+            channel: Some(config.wifi_channel).filter(|c| *c != u8::MAX),
             scan_method: ScanMethod::FastScan,
             pmf_cfg: PmfConfiguration::Capable { required: false },
             ..Default::default()
