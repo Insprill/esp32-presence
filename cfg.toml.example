@@ -5,23 +5,31 @@
 ########
 wifi_ssid = "MySSID"
 wifi_password = "1234"
+# None | WPA | WPA2Personal | WPAWPA2Personal | WPA3Personal | WPA2WPA3Personal
 wifi_auth_method = "WPA2Personal"
-# wifi_starting_tx_power = 5
-# wifi_max_tx_power = 20
-# After power on, how long should we wait without a WiFi connection before switching to max power
-# wifi_tx_increase_power_seconds = 300
-# wifi_disconnect_rssi = -80
-# wifi_disconnect_seconds = 4
+# The maximum WiFi transmit power, in dBm, from 2-20 (inclusive).
+#wifi_max_tx_power = 20
+# Once the WiFi RSSI is under this value, it will disconnect and enter the MQTT reconnect timeout.
+#wifi_disconnect_rssi = -80
+# How long the WiFi signal must be under the wifi_disconnect_rssi before it's disconnected.
+#wifi_disconnect_seconds = 4
+# How long after WiFi has connected should the RSSI threshold be ignored.
+#wifi_ignore_rssi_seconds = 10
 
 ########
 # MQTT #
 ########
 mqtt_host = "yourpc.local"
-# mqtt_node = "presence-node-1"
 mqtt_user = "you"
 mqtt_pass = "1234"
-# mqtt_discovery_prefix = "homeassistant"
-# mqtt_on_payload = "ON"
-# mqtt_off_payload = "OFF"
-# After MQTT disconnects, how long should we wait before trying to reconnect
-# mqtt_min_reconnect_seconds: 300,
+# The MQTT node name for this device. This must be unique.
+mqtt_node = "presence-node-1"
+#mqtt_discovery_prefix = "homeassistant"
+# The MQTT payload sent when the device connects.
+#mqtt_on_payload = "ON"
+# The MQTT payload sent when the device disconnects.
+#mqtt_off_payload = "OFF"
+# How long, in seconds, must MQTT be disconnected before entering the reconnect timeout.
+#mqtt_disconnected_timeout = 10
+# After MQTT has been disconnected, how long, in seconds, must we wait before trying to reconnect.
+#mqtt_reconnect_timeout = 300

@@ -1,10 +1,8 @@
 use anyhow::{bail, Result};
 use esp_idf_svc::{
     eventloop::EspSystemEventLoop,
-    hal::{modem::Modem, peripheral::Peripheral, prelude::Peripherals},
-    sys::{
-        esp_wifi_get_max_tx_power, esp_wifi_set_max_tx_power, ESP_ERR_INVALID_ARG, ESP_ERR_TIMEOUT,
-    },
+    hal::{peripheral::Peripheral, prelude::Peripherals},
+    sys::{esp_wifi_set_max_tx_power, ESP_ERR_INVALID_ARG, ESP_ERR_TIMEOUT},
     wifi::{
         AuthMethod, BlockingWifi, ClientConfiguration, Configuration, EspWifi, PmfConfiguration,
         ScanMethod,
@@ -39,12 +37,8 @@ impl WiFi {
             }
         };
 
+        let modem = unsafe { peripherals.modem.clone_unchecked() };
         let sysloop = EspSystemEventLoop::take()?;
-
-        let modem: Modem;
-        unsafe {
-            modem = peripherals.modem.clone_unchecked();
-        }
 
         let mut esp_wifi = EspWifi::new(modem, sysloop.clone(), None)?;
         esp_wifi.set_configuration(&Configuration::Client(ClientConfiguration {
@@ -93,15 +87,6 @@ impl WiFi {
 
     pub fn disconnect(&mut self) -> Result<()> {
         Ok(self.esp_wifi.disconnect()?)
-    }
-
-    pub fn is_max_tx_power() -> bool {
-        let mut power: i8 = 0;
-        unsafe {
-            esp_wifi_get_max_tx_power(&mut power);
-        }
-        // See `esp_wifi_set_max_tx_power`. Range is 8-84.
-        power > 80
     }
 
     pub fn set_max_tx_power(dbm: i8) {
