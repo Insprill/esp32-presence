@@ -102,6 +102,11 @@ impl Mqtt {
         // When the EspMqttClient gets dropped, it gets destroyed
         // See the C implementations of `esp_mqtt_client_destroy` and `esp_mqtt_client_stop`.
         self.client.take();
+        if let Ok(status) = &mut self.connection_status.lock() {
+            // Don't use set_connected since we need was & is to be false
+            status.was_connected = false;
+            status.is_connected = false;
+        }
     }
 
     pub fn is_connected(&self) -> bool {
