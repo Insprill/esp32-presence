@@ -169,7 +169,6 @@ impl State<'_> {
         if self.mqtt.is_connected() {
             self.mqtt.disconnect();
         }
-        self.wifi.disconnect()?;
         self.set_led_with_brightness(CLR_SLEEPING, DEFAULT_BRIGHTNESS);
         sleep(Duration::from_secs(CONFIG.mqtt_reconnect_timeout));
         Ok(())

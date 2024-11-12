@@ -86,10 +86,6 @@ impl WiFi {
         Ok(true)
     }
 
-    pub fn disconnect(&mut self) -> Result<()> {
-        Ok(self.esp_wifi.disconnect()?)
-    }
-
     pub fn set_max_tx_power(dbm: i8) {
         if unsafe { esp_wifi_set_max_tx_power(dbm * 4) } == ESP_ERR_INVALID_ARG {
             error!("Invalid WiFi power {}dBm", dbm);
